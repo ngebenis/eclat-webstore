@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS custom properties (shadcn + ÉCLAT brand) ─────────────────────── */
+@layer base {
+  :root {
+    /* shadcn semantic tokens mapped to ÉCLAT cream/green palette */
+    --background:         50 33% 99%;
+    --foreground:         140 25% 12%;
+
+    --card:               0 0% 100%;
+    --card-foreground:    140 25% 12%;
+
+    --popover:            0 0% 100%;
+    --popover-foreground: 140 25% 12%;
+
+    /* primary = deep eclat green */
+    --primary:            152 90% 16%;
+    --primary-foreground: 60 9% 98%;
+
+    /* secondary = soft green tint */
+    --secondary:          152 30% 94%;
+    --secondary-foreground: 152 90% 16%;
+
+    --muted:              60 8% 95%;
+    --muted-foreground:   140 10% 45%;
+
+    --accent:             152 25% 92%;
+    --accent-foreground:  152 90% 16%;
+
+    --destructive:        0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border:             152 15% 88%;
+    --input:              152 15% 88%;
+    --ring:               152 90% 16%;
+
+    --radius: 0.6rem;
+  }
+}
+
+/* ─── Base resets ───────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-eclat-cream text-eclat-dark antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-bold tracking-tight text-balance;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  img {
+    @apply select-none;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-eclat-700 ring-offset-2 ring-offset-background rounded-sm;
+  }
+}
+
+/* ─── Utility layers ────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gradient text helper */
+  .text-gradient {
+    @apply bg-gradient-to-r from-eclat-800 to-eclat-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-eclat-gold to-amber-400 bg-clip-text text-transparent;
+  }
+
+  /* Section padding */
+  .section-py {
+    @apply py-20 md:py-28 lg:py-32;
+  }
+
+  .section-py-sm {
+    @apply py-12 md:py-16;
+  }
+
+  /* Glass morphism card */
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/30;
+  }
+
+  /* Hover lift */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  /* Hide scrollbar (marquee) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ─── Custom components ─────────────────────────────────────────────────── */
+@layer components {
+  /* Prose content for blog articles */
+  .prose-eclat {
+    @apply prose prose-lg max-w-none
+      prose-headings:font-serif prose-headings:text-eclat-900
+      prose-p:text-eclat-dark prose-p:leading-relaxed
+      prose-a:text-eclat-700 prose-a:underline-offset-2 hover:prose-a:text-eclat-500
+      prose-strong:text-eclat-900
+      prose-blockquote:border-l-eclat-600 prose-blockquote:text-eclat-800
+      prose-img:rounded-2xl prose-img:shadow-md
+      prose-hr:border-eclat-100;
+  }
+
+  /* Skeleton loading shimmer */
+  .skeleton {
+    @apply relative overflow-hidden bg-eclat-100 rounded-lg;
+  }
+  .skeleton::after {
+    @apply absolute inset-0;
+    content: '';
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%);  }
+  }
+}
+
+/* ─── Embla Carousel ────────────────────────────────────────────────────── */
+.embla {
+  overflow: hidden;
+}
+.embla__container {
+  display: flex;
+}
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}

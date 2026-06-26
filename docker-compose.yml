@@ -1,0 +1,136 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ÉCLAT Cold Press Juice — Full Stack Docker Compose
+# Services: frontend (Next.js) · backend (Laravel) · nginx · postgres · redis
+# ═══════════════════════════════════════════════════════════════════════════
+
+name: eclat
+
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: eclat_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_DATABASE:-eclat_db}
+      POSTGRES_USER:     ${DB_USERNAME:-eclat_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      PGDATA:            /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-eclat_user} -d ${DB_DATABASE:-eclat_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eclat_network
+
+  # ── Redis ─────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: eclat_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - eclat_network
+
+  # ── Laravel Backend (PHP-FPM) ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: eclat_backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - backend_vendor:/var/www/html/vendor
+    environment:
+      APP_NAME:      "ÉCLAT API"
+      APP_ENV:       local
+      APP_DEBUG:     "true"
+      APP_URL:       http://localhost:8000
+      DB_CONNECTION: pgsql
+      DB_HOST:       postgres
+      DB_PORT:       5432
+      DB_DATABASE:   ${DB_DATABASE:-eclat_db}
+      DB_USERNAME:   ${DB_USERNAME:-eclat_user}
+      DB_PASSWORD:   ${DB_PASSWORD:-secret}
+      REDIS_HOST:    redis
+      REDIS_PORT:    6379
+      CACHE_STORE:   redis
+      QUEUE_CONNECTION: redis
+      FRONTEND_URL:  http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - eclat_network
+
+  # ── Nginx (reverse proxy for Laravel) ────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: eclat_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - eclat_network
+
+  # ── Next.js Frontend ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: eclat_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      NODE_ENV: development
+    depends_on:
+      - nginx
+    networks:
+      - eclat_network
+
+# ── Volumes ───────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  backend_vendor:
+  frontend_node_modules:
+  frontend_next:
+
+# ── Network ───────────────────────────────────────────────────────────────
+networks:
+  eclat_network:
+    driver: bridge
