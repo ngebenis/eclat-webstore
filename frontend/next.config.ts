@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Required so `frontend/Dockerfile`'s production stage can copy
+  // `.next/standalone` — without this, `npm run build` never emits it
+  // and the production image build fails.
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
